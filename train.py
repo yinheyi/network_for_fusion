@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 data = scipy.io.loadmat('data.mat')
 
 # 创建网络并加载样本
-solver = net.Net()
+solver = net.Net(200, 0.01, 0.2)
 solver.load_sample_and_label(data['fft_tr180'], data['dps3_tr180'], data['power_tr180'], data['train_label'])
 
 # 初始化权值;

@@ -13,7 +13,7 @@ import numpy as np
 import update_method
 import function_for_layer as ffl
 
-# 一些重要的参数:
+# 一些重要的全局变量的参数:
 update_function = update_method.batch_gradient_descent
 weights_decay = 0.01
 batch_size = 200
@@ -59,9 +59,7 @@ class fusion_layer:
 	#更新加权系数的值;
 	def update(self):
 		grad_weights_average = np.mean(self.grad_weights, 0)  
-		(self.weights, self.previous_direction) = update_function(self.weights,
-																  grad_weights_average,
-																  self.previous_direction)
+		(self.weights, self.previous_direction) = update_function(self.weights, grad_weights_average, self.previous_direction)
 
 #定义全连接层的类
 

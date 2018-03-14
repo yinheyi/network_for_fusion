@@ -11,7 +11,11 @@
 import layer
 
 class Net:
-	def __init__(self):
+	def __init__(self, batch_size, lr = 0.01, weights_decay = 0.05):
+		layer.batch_size = batch_size
+		layer.update_method.base_lr = lr
+		layer.weights_decay = weights_decay 
+
 		self.data = layer.fusion_layer(256)
 		self.fc1 = layer.fully_connected_layer(256, 50)
 		self.ac = layer.activation_layer(50, 'tanh')
