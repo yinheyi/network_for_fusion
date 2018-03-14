@@ -17,15 +17,18 @@ import numpy as np
 
 #定义一些需要的全局变量
 momentum = 0.9
-base_lr  = 0.0          # 在建造net是对它初始化;
-iteration = 0           # 它常常需要在训练过程中修改
+base_lr  = 0         # 在建造net是对它初始化;
+iteration = -1       # 它常常需要在训练过程中修改
 
 
 ###########################      定义学习率的变化机制函数     ####################################
 
 # inv方法  (它是什么意思, 我也不知道,反正caffe里有这个方法)
 def inv(gamma = 0.0005, power = 0.75):
+	if iteration == -1:
+		assert False, '需要在训练过程中,改变update_method 模块里的 iteration 的值'
 	return base_lr * np.power((1 + gamma * iteration), -power) 
+
 # 固定方法
 def fixed():
 	return base_lr

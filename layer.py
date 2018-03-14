@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
- 在该模块内定义了神经网络的layer,包括输入层/全连接层/激活函数层/损失函数层;
+ 在该模块内定义了神经网络的layer,包括数据层/加权层/全连接层/激活函数层/损失函数层;
  具体可以见说明文档
 
 作者: 殷和义
@@ -10,15 +10,46 @@
 
 from __future__ import division
 import numpy as np
+import random
 import update_method
 import function_for_layer as ffl
 
 # 一些重要的全局变量的参数:
 update_function = update_method.batch_gradient_descent
 weights_decay = 0.01
-batch_size = 200
+batch_size = 64 
 
-#定义输入层的类;
+#定义数据层的类:
+class data:
+	def __init__(self):
+		self.data_sample = 0
+		self.data_label = 0
+		self.output_sample = 0
+		self.output_label = 0
+		self.point = 0           #用于记住下一次pull数据的地方;
+
+	def get_data(self, sample, label):   # sample 每一行表示一个样本数据, label的每一行表示一个样本的标签.
+		self.data_sample = sample
+		self.data_label = label
+
+	def shuffle(self):
+		random_sequence = random.sample(np.arange(self.data_sample.shape[0]), self.data_sample.shape[0])
+		self.data_sample = self.data_sample[random_sequence]
+		self.data_label = self.data_label[random_sequence]
+
+	def pull_data(self):     #把数据推向输出
+		start = self.point
+		end = start + batch_size
+		output_index = np.arange(start, end)
+		if end > self.data_sample.shape[0]:
+			end = end - self.data_sample.shape[0] 
+			output_index = np.append(np.arange(start, self.data_sample.shape[0]), np.arange(0, end))
+		self.output_sample = self.data_sample[output_index]
+		self.output_label = self.data_label[output_index]
+		self.point = end % self.data_sample.shape[0]
+		
+
+#定义加权融合层的类;
 class fusion_layer:
 	#初始化所有变量
 	def __init__(self, num_dimension):
