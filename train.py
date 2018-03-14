@@ -28,19 +28,21 @@ train_label = train_label[random_seed]
 
 
 # 创建网络并加载样本
-solver = net.net(64, 0.01, 0.005)
+solver = net.net(64, 0.005, 0.01)
 solver.load_sample_and_label(fft, power, dps3, train_label)
 
 # 初始化权值;
 solver.initial()
 
+
 #初始化一些数组,用于保存需要的数据;
-train_error = np.zeros(500)
-weight1 = np.zeros(500)
-weight2 = np.zeros(500)
+num_train = 1000
+train_error = np.zeros(num_train)
+weight1 = np.zeros(num_train)
+weight2 = np.zeros(num_train)
 
 # 训练
-for i in range(500):
+for i in range(num_train):
 	net.layer.update_method.iteration  = i
 	solver.forward()
 	solver.backward()
@@ -51,7 +53,16 @@ for i in range(500):
 	weight2[i] = solver.fu.weights[1]
 	train_error[i] = solver.loss.loss
 
-print solver.loss.accuracy
-plt.plot(range(500), weight1, range(500), weight2, range(500), train_error)
-#plt.plot(train_error)
-plt.show()
+
+# 测试
+net.layer.batch_size = 250
+fft = data['fft_tst180']
+power = data['power_tst180']
+dps3 = data['dps3_tst180']
+test_label = data['test_label']
+
+solver.load_sample_and_label(fft, power, dps3, test_label)
+for i in range(4):
+	solver.forward()
+	print solver.loss.accuracy
+
