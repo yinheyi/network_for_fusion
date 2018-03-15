@@ -44,6 +44,7 @@ class data:
 		if end > self.data_sample.shape[0]:
 			end = end - self.data_sample.shape[0] 
 			output_index = np.append(np.arange(start, self.data_sample.shape[0]), np.arange(0, end))
+		print self.point
 		self.output_sample = self.data_sample[output_index]
 		self.output_label = self.data_label[output_index]
 		self.point = end % self.data_sample.shape[0]
@@ -61,7 +62,7 @@ class fusion_layer:
 		self.weights = np.zeros(2)
 		self.previous_direction = np.zeros(2) #用于权值更新时,使用;
 		self.grad_weights = np.zeros((batch_size, 2))
-		self.grad_outputs_now = np.zeros((batch_size, num_dimension))
+		self.grad_outputs = np.zeros((batch_size, num_dimension))
 
 	def initialize_weights(self, weight1, weight2):
 		self.weights = np.array([weight1, weight2])
@@ -75,16 +76,16 @@ class fusion_layer:
 	def forward(self):
 		self.outputs = self.inputs1 * self.weights[0] +\
 		               self.inputs2 * self.weights[1] +\
-					   self.inputs3 * (1 -self.weights[0] - self.weights[1])
+					   self.inputs3 * (1 - self.weights[0] - self.weights[1])
 
-	def get_inputs_for_backward(self, inputs):
-		self.grad_outputs_now = inputs
+	def get_inputs_for_backward(self, grad_outputs):
+		self.grad_outputs = grad_outputs
 
 	#计算对加权系数的导数;
 	def backward(self):
-		self.grad_weights[:, 0] = np.sum(self.grad_outputs_now * (self.inputs1 - self.inputs3), 1) +\
+		self.grad_weights[:, 0] = np.sum(self.grad_outputs * (self.inputs1 - self.inputs3), 1) +\
 		                           np.ones(batch_size) * self.weights[0] * weights_decay 
-		self.grad_weights[:, 1] = np.sum(self.grad_outputs_now * (self.inputs2 - self.inputs3), 1) + \
+		self.grad_weights[:, 1] = np.sum(self.grad_outputs * (self.inputs2 - self.inputs3), 1) + \
 		                           np.ones(batch_size) * self.weights[1] * weights_decay 
 
 	#更新加权系数的值;
@@ -95,22 +96,22 @@ class fusion_layer:
 #定义全连接层的类
 
 class fully_connected_layer:
-	def __init__(self, num_neuron_previous, num_neuron_now):
-		self.num_neuron_previous = num_neuron_previous
-		self.num_neuron_now = num_neuron_now
-		self.inputs = np.zeros((batch_size, num_neuron_previous))
-		self.outputs = np.zeros((batch_size, num_neuron_now))
-		self.weights = np.zeros((num_neuron_previous, num_neuron_now))
-		self.bias = np.zeros(num_neuron_now)
-		self.weights_previous_direction = np.zeros((num_neuron_previous, num_neuron_now))
-		self.bias_previous_direction = np.zeros(num_neuron_now)
-		self.grad_weights = np.zeros((batch_size, num_neuron_previous, num_neuron_now))
-		self.grad_bias = np.zeros((batch_size, num_neuron_now))
-		self.grad_outputs_previous = np.zeros((batch_size, num_neuron_previous))
-		self.grad_outputs_now = np.zeros((batch_size,num_neuron_now)) 
+	def __init__(self, num_neuron_inputs, num_neuron_outputs):
+		self.num_neuron_inputs = num_neuron_inputs
+		self.num_neuron_outputs = num_neuron_outputs
+		self.inputs = np.zeros((batch_size, num_neuron_inputs))
+		self.outputs = np.zeros((batch_size, num_neuron_outputs))
+		self.weights = np.zeros((num_neuron_inputs, num_neuron_outputs))
+		self.bias = np.zeros(num_neuron_outputs)
+		self.weights_previous_direction = np.zeros((num_neuron_inputs, num_neuron_outputs))
+		self.bias_previous_direction = np.zeros(num_neuron_outputs)
+		self.grad_weights = np.zeros((batch_size, num_neuron_inputs, num_neuron_outputs))
+		self.grad_bias = np.zeros((batch_size, num_neuron_outputs))
+		self.grad_inputs = np.zeros((batch_size, num_neuron_inputs))
+		self.grad_outputs = np.zeros((batch_size,num_neuron_outputs)) 
 
 	def initialize_weights(self):
-		self.weights = ffl.xavier(self.num_neuron_previous, self.num_neuron_now)
+		self.weights = ffl.xavier(self.num_neuron_inputs, self.num_neuron_outputs)
 
 	# 在正向传播过程中,用于获取输入;
 	def get_inputs_for_forward(self, inputs):
@@ -121,19 +122,19 @@ class fully_connected_layer:
 		self.outputs = self.inputs .dot(self.weights) + np.tile(self.bias, (batch_size, 1))
 
 	# 在反向传播过程中,用于获取输入;
-	def get_inputs_for_backward(self, inputs):
-		self.grad_outputs_now = inputs
+	def get_inputs_for_backward(self, grad_outputs):
+		self.grad_outputs = grad_outputs 
 
 	def backward(self):
 		#求权值的梯度,求得的结果是一个三维的数组,因为有多个样本;
 		for i in np.arange(batch_size):
 			self.grad_weights[i,:] = np.tile(self.inputs[i,:], (1, 1)).T \
-			                         .dot(np.tile(self.grad_outputs_now[i, :], (1, 1))) + \
+			                         .dot(np.tile(self.grad_outputs[i, :], (1, 1))) + \
 									 self.weights * weights_decay
 		#求求偏置的梯度;
-		self.grad_bias = self.grad_outputs_now
-		#求 上一层输出的梯度;
-		self.grad_outputs_previous = self.grad_outputs_now .dot(self.weights.T)
+		self.grad_bias = self.grad_outputs
+		#求 输入的梯度;
+		self.grad_inputs = self.grad_outputs .dot(self.weights.T)
 
 	def update(self):
 		#权值与偏置的更新;
@@ -147,23 +148,22 @@ class fully_connected_layer:
 																		self.bias_previous_direction)
 
 class activation_layer:
-	def __init__(self, num_neuron, activation_fun):
-		self.num_neuron = num_neuron
-		if activation_fun == 'sigmoid':
+	def __init__(self, activation_function_name):
+		if activation_fun_name == 'sigmoid':
 			self.activation_function = ffl.sigmoid
 			self.der_activation_function = ffl.der_sigmoid
-		elif activation_fun == 'tanh':
+		elif activation_fun_name == 'tanh':
 			self.activation_function = ffl.tanh
 			self.der_activation_function = ffl.der_tanh
-		elif activation_fun == 'relu':
+		elif activation_fun_name == 'relu':
 			self.activation_function = ffl.relu
 			self.der_activation_function = ffl.der_relu
 		else:
 			print '输入的激活函数不对啊'
-		self.inputs = np.zeros((batch_size, num_neuron))
-		self.outputs = np.zeros((batch_size, num_neuron))
-		self.grad_outputs_previous = np.zeros((batch_size, num_neuron))
-		self.grad_outputs_now = np.zeros((batch_size, num_neuron))
+		self.inputs = 0
+		self.outputs = 0
+		self.grad_inputs = 0
+		self.grad_outputs = 0
 
 	def get_inputs_for_forward(self, inputs):
 		self.inputs = inputs
@@ -172,25 +172,24 @@ class activation_layer:
 		#需要激活函数
 		self.outputs = self.activation_function(self.inputs)
 
-	def get_inputs_for_backward(self, inputs):
-		self.grad_outputs_now = inputs
+	def get_inputs_for_backward(self, grad_outputs):
+		self.grad_outputs = grad_outputs 
 
 	def backward(self):
 		#需要激活函数的导数
-		self.grad_outputs_previous = self.grad_outputs_now * self.der_activation_function(self.inputs)
+		self.grad_inputs = self.grad_outputs * self.der_activation_function(self.inputs)
 
 class loss_layer:
-	def __init__(self, num_neuron, loss_fun):
-		self.num_neuron = num_neuron
-		self.inputs = np.zeros((batch_size, num_neuron))
+	def __init__(self, loss_function_name):
+		self.inputs = 0
 		self.loss = 0
 		self.accuracy = 0
-		self.label = np.zeros((batch_size, num_neuron))
-		self.grad_outputs_previous = np.zeros((batch_size, num_neuron))
-		if loss_fun == 'SoftmaxWithLoss':
+		self.label = 0
+		self.grad_inputs = 0
+		if loss_function_name == 'SoftmaxWithLoss':
 			self.loss_function =ffl.softmaxwithloss
 			self.der_loss_function =ffl.der_softmaxwithloss
-		elif loss_fun == 'LeastSquareError':
+		elif loss_function_name == 'LeastSquareError':
 			self.loss_function =ffl.least_square_error
 			self.der_loss_function =ffl.der_least_square_error
 		else:
@@ -203,10 +202,12 @@ class loss_layer:
 		self.inputs = inputs
 
 	def compute_loss_and_accuracy(self):
-		self.loss = self.loss_function(self.inputs, self.label)
+		#计算正确率
 		if_equal = np.argmax(self.inputs, 1) == np.argmax(self.label, 1)
 		self.accuracy = np.sum(if_equal) / batch_size 
+		#计算训练误差
+		self.loss = self.loss_function(self.inputs, self.label)
 
 	def compute_gradient(self):
-		self.grad_outputs_previous = self.der_loss_function(self.inputs, self.label)
+		self.grad_inputs = self.der_loss_function(self.inputs, self.label)
 
