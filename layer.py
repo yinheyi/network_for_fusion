@@ -44,7 +44,6 @@ class data:
 		if end > self.data_sample.shape[0]:
 			end = end - self.data_sample.shape[0] 
 			output_index = np.append(np.arange(start, self.data_sample.shape[0]), np.arange(0, end))
-		print self.point
 		self.output_sample = self.data_sample[output_index]
 		self.output_label = self.data_label[output_index]
 		self.point = end % self.data_sample.shape[0]
@@ -149,13 +148,13 @@ class fully_connected_layer:
 
 class activation_layer:
 	def __init__(self, activation_function_name):
-		if activation_fun_name == 'sigmoid':
+		if activation_function_name == 'sigmoid':
 			self.activation_function = ffl.sigmoid
 			self.der_activation_function = ffl.der_sigmoid
-		elif activation_fun_name == 'tanh':
+		elif activation_function_name == 'tanh':
 			self.activation_function = ffl.tanh
 			self.der_activation_function = ffl.der_tanh
-		elif activation_fun_name == 'relu':
+		elif activation_function_name == 'relu':
 			self.activation_function = ffl.relu
 			self.der_activation_function = ffl.der_relu
 		else:

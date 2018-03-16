@@ -43,7 +43,7 @@ def der_relu(x):
 def softmaxwithloss(inputs, label):
 	temp1 = np.exp(inputs)
 	probability = temp1 / (np.tile(np.sum(temp1, 1), (inputs.shape[1], 1))).T
-	temp3 = np.argmax(label, 1)   #横坐标
+	temp3 = np.argmax(label, 1)   #纵坐标
 	temp4 = [probability[i, j] for (i, j) in zip(np.arange(label.shape[0]), temp3)]
 	loss = -1 * np.mean(np.log(temp4))
 	return loss
@@ -58,8 +58,8 @@ def der_softmaxwithloss(inputs, label):
 ######################################      权值初始化方法相关函数的定义  ############################################
 
 # xavier 初始化方法
-def xavier(num_neuron_previous, num_neuron_now):
-	temp1 =  np.sqrt(6) / np.sqrt(num_neuron_previous+ num_neuron_now + 1)
-	weights = stats.uniform.rvs(-temp1, 2 * temp1, (num_neuron_previous, num_neuron_now))
+def xavier(num_neuron_inputs, num_neuron_outputs):
+	temp1 =  np.sqrt(6) / np.sqrt(num_neuron_inputs+ num_neuron_outputs + 1)
+	weights = stats.uniform.rvs(-temp1, 2 * temp1, (num_neuron_inputs, num_neuron_outputs))
 	return weights
 

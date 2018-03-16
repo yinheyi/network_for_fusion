@@ -21,9 +21,9 @@ class net:
 		self.da3 = layer.data()
 		self.fu = layer.fusion_layer(256)
 		self.fc1 = layer.fully_connected_layer(256, 50)
-		self.ac = layer.activation_layer(50, 'tanh')
+		self.ac = layer.activation_layer('tanh')
 		self.fc2 = layer.fully_connected_layer(50, 4)
-		self.loss = layer.loss_layer(4, 'SoftmaxWithLoss')
+		self.loss = layer.loss_layer('SoftmaxWithLoss')
 	
 	def load_sample_and_label(self, sample1, sample2, sample3, label):
 		self.da1.get_data(sample1, label)
@@ -53,13 +53,13 @@ class net:
 	
 	def backward(self):
 		self.loss.compute_gradient()
-		self.fc2.get_inputs_for_backward(self.loss.grad_outputs_previous)
+		self.fc2.get_inputs_for_backward(self.loss.grad_inputs)
 		self.fc2.backward()
-		self.ac.get_inputs_for_backward(self.fc2.grad_outputs_previous)
+		self.ac.get_inputs_for_backward(self.fc2.grad_inputs)
 		self.ac.backward()
-		self.fc1.get_inputs_for_backward(self.ac.grad_outputs_previous)
+		self.fc1.get_inputs_for_backward(self.ac.grad_inputs)
 		self.fc1.backward()
-		self.fu.get_inputs_for_backward(self.fc1.grad_outputs_previous)
+		self.fu.get_inputs_for_backward(self.fc1.grad_inputs)
 		self.fu.backward()
 
 	def update(self):
