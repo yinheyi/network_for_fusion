@@ -16,47 +16,38 @@ class net:
 		layer.update_method.base_lr = lr
 		layer.weights_decay = weights_decay 
 
-		self.da1 = layer.data()
-		self.da2 = layer.data()
-		self.da3 = layer.data()
-		self.da_test1 = layer.data()
-		self.da_test2 = layer.data()
-		self.da_test3 = layer.data()
-		self.fu = layer.fusion_layer(256)
+		self.da = layer.data()
+		self.da_test = layer.data()
 		self.fc1 = layer.fully_connected_layer(256, 50)
 		self.ac = layer.activation_layer('tanh')
 		self.fc2 = layer.fully_connected_layer(50, 4)
 		self.loss = layer.loss_layer('SoftmaxWithLoss')
 	
-	def load_sample_and_label(self, sample1, sample2, sample3, label):
-		self.da1.get_data(sample1, label)
-		self.da2.get_data(sample2, label)
-		self.da3.get_data(sample3, label)
+	def load_sample_and_label(self, sample, label):
+		self.da.get_data(sample, label)
 
-	def load_sample_and_label_test(self, sample1, sample2, sample3, label):
-		self.da_test1.get_data(sample1, label)
-		self.da_test2.get_data(sample2, label)
-		self.da_test3.get_data(sample3, label)
+	def load_sample_and_label_test(self, sample, label):
+		self.da_test.get_data(sample, label)
+
+	def pre_process(self):
+		#对训练样本进行洗牌
+		self.da.shuffle()
 
 	def initial(self):
-		self.fu.initialize_weights(0.3, 0.3)
+		#初始化权值
 		self.fc1.initialize_weights()
 		self.fc2.initialize_weights()
 
 	def forward(self):
-		self.da1.pull_data()
-		self.da2.pull_data()
-		self.da3.pull_data()
-		self.fu.get_inputs_for_forward(self.da1.output_sample, self.da2.output_sample, self.da3.output_sample)
-		self.fu.forward()
-		self.fc1.get_inputs_for_forward(self.fu.outputs)
+		self.da.pull_data()
+		self.fc1.get_inputs_for_forward(self.da.output_sample)
 		self.fc1.forward()
 		self.ac.get_inputs_for_forward(self.fc1.outputs)
 		self.ac.forward()
 		self.fc2.get_inputs_for_forward(self.ac.outputs)
 		self.fc2.forward()
 		self.loss.get_inputs_for_loss(self.fc2.outputs)
-		self.loss.get_label_for_loss(self.da1.output_label)
+		self.loss.get_label_for_loss(self.da.output_label)
 		self.loss.compute_loss_and_accuracy()
 	
 	def turn_to_test(self, batch_size_test):
@@ -64,19 +55,15 @@ class net:
 	def turn_to_train(self, batch_size_train):
 		layer.batch_size = batch_size_train
 	def forward_test(self):
-		self.da_test1.pull_data()
-		self.da_test2.pull_data()
-		self.da_test3.pull_data()
-		self.fu.get_inputs_for_forward(self.da_test1.output_sample, self.da_test2.output_sample, self.da_test3.output_sample)
-		self.fu.forward()
-		self.fc1.get_inputs_for_forward(self.fu.outputs)
+		self.da_test.pull_data()
+		self.fc1.get_inputs_for_forward(self.da_test.output_sample)
 		self.fc1.forward()
 		self.ac.get_inputs_for_forward(self.fc1.outputs)
 		self.ac.forward()
 		self.fc2.get_inputs_for_forward(self.ac.outputs)
 		self.fc2.forward()
 		self.loss.get_inputs_for_loss(self.fc2.outputs)
-		self.loss.get_label_for_loss(self.da_test1.output_label)
+		self.loss.get_label_for_loss(self.da_test.output_label)
 		self.loss.compute_loss_and_accuracy()
 
 	def backward(self):
@@ -87,10 +74,7 @@ class net:
 		self.ac.backward()
 		self.fc1.get_inputs_for_backward(self.ac.grad_inputs)
 		self.fc1.backward()
-		self.fu.get_inputs_for_backward(self.fc1.grad_inputs)
-		self.fu.backward()
 
 	def update(self):
-		self.fu.update()
 		self.fc1.update()
 		self.fc2.update()
