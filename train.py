@@ -19,11 +19,15 @@ data = scipy.io.loadmat('data.mat')
 fft = data['fft_tr180']
 power = data['power_tr180']
 dps3 = data['dps3_tr180']
+dps2 = data['dps2_tr180']
+dps1 = data['dps1_tr180']
 train_label = data['train_label']
 
 fft_test = data['fft_tst180']
 power_test = data['power_tst180']
 dps3_test = data['dps3_tst180']
+dps2_test = data['dps2_tst180']
+dps1_test = data['dps1_tst180']
 test_label = data['test_label']
 #  对训练数据进行洗牌,注意:一定要把三种特征及标签的顺序保持一致;
 random_seed = random.sample(np.arange(200), 200)
@@ -33,16 +37,16 @@ dps3 = dps3[random_seed]
 train_label = train_label[random_seed]
 
 #一些相关的重要参数
-num_train = 5000
+num_train = 2000
 test_interval = 20
-lr = 0.01
-weight_decay = 0.0001
+lr = 0.1
+weight_decay = 0.001
 train_batch_size = 50
 test_batch_size = 250
 
 # 创建网络并加载样本
 solver = net.net(train_batch_size, lr, weight_decay)
-solver.load_sample_and_label(fft, power, dps3, train_label)
+solver.load_sample_and_label(fft, power, dps3,train_label)
 solver.load_sample_and_label_test(fft_test, power_test, dps3_test, test_label)
 
 # 初始化权值;

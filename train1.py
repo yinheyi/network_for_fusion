@@ -35,13 +35,13 @@ num_train = 5000
 test_interval = 20
 train_batch_size = 50
 test_batch_size = 250
-lr = 0.05
+lr = 0.1
 weight_decay = 0.0001
 
 # 创建网络并加载样本
 solver = net1.net(train_batch_size, lr, weight_decay)
-solver.load_sample_and_label(dps1, train_label)
-solver.load_sample_and_label_test(dps1_test, test_label)
+solver.load_sample_and_label(dps3, train_label)
+solver.load_sample_and_label_test(dps3_test, test_label)
 
 #对训练样本进行洗牌
 solver.pre_process()
