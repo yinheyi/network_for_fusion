@@ -39,7 +39,7 @@ train_label = train_label[random_seed]
 #一些相关的重要参数
 num_train = 2000
 test_interval = 20
-lr = 0.1
+lr = 0.2
 weight_decay = 0.001
 train_batch_size = 50
 test_batch_size = 250
@@ -98,7 +98,7 @@ plt.plot(train_sequence, weight1, train_sequence, weight2,
 		train_sequence, train_error)
 plt.subplot(2, 1, 2)
 plt.plot(test_sequence, acc1, test_sequence, acc2, test_sequence, acc3, test_sequence, acc4)
-plt.show()
+#plt.show()
 
 print acc1[-1], acc2[-1], acc3[-1], acc4[-1]
 
