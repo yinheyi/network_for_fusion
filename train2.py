@@ -9,7 +9,7 @@
 
 import scipy.io
 import random
-import net
+import net2
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -45,7 +45,7 @@ train_batch_size = 50
 test_batch_size = 250
 
 # 创建网络并加载样本
-solver = net.net(train_batch_size, lr, weight_decay)
+solver = net2.net(train_batch_size, lr, weight_decay)
 #solver.load_sample_and_label(fft, power, dps3,train_label)
 #solver.load_sample_and_label_test(fft_test, power_test, dps3_test, test_label)
 solver.load_sample_and_label(power, dps3,fft, train_label)
@@ -62,6 +62,7 @@ test_sequence = range(num_train // test_interval)
 train_error = np.zeros(num_train)
 weight1 = np.zeros(num_train)
 weight2 = np.zeros(num_train)
+weight3 = np.zeros(num_train)
 acc1 = np.zeros((num_train - 1)// test_interval + 1)
 acc2 = np.zeros((num_train - 1)// test_interval + 1)
 acc3 = np.zeros((num_train - 1)// test_interval + 1)
@@ -70,7 +71,7 @@ acc4 = np.zeros((num_train - 1)// test_interval + 1)
 # 训练
 for i in train_sequence:
 	print '第', i, '次迭代'
-	net.layer.update_method.iteration  = i
+	net2.layer.update_method.iteration  = i
 	solver.forward()
 	solver.backward()
 	solver.update()
@@ -78,6 +79,7 @@ for i in train_sequence:
 	#记录一些数值
 	weight1[i] = solver.fu.weights[0]
 	weight2[i] = solver.fu.weights[1]
+	weight3[i] = solver.fu.weights[2]
 	train_error[i] = solver.loss.loss
 	if i % test_interval == 0:
 		solver.turn_to_test(test_batch_size)
@@ -96,7 +98,7 @@ for i in train_sequence:
 
 plt.subplot(2, 1, 1)
 plt.plot(train_sequence, weight1, train_sequence, weight2, 
-		train_sequence, np.ones(num_train) - weight1 - weight2, 
+		train_sequence, weight3, 
 		train_sequence, train_error)
 plt.subplot(2, 1, 2)
 plt.plot(test_sequence, acc1, test_sequence, acc2, test_sequence, acc3, test_sequence, acc4)

@@ -83,9 +83,53 @@ class fusion_layer:
 	#计算对加权系数的导数;
 	def backward(self):
 		self.grad_weights[:, 0] = np.sum(self.grad_outputs * (self.inputs1 - self.inputs3), 1) +\
-		                           np.ones(batch_size) * self.weights[0] * weights_decay * 10
+		                           np.ones(batch_size) * self.weights[0] * weights_decay  * 10
 		self.grad_weights[:, 1] = np.sum(self.grad_outputs * (self.inputs2 - self.inputs3), 1) + \
-		                           np.ones(batch_size) * self.weights[1] * weights_decay * 10 
+		                           np.ones(batch_size) * self.weights[1] * weights_decay * 10
+
+	#更新加权系数的值;
+	def update(self):
+		grad_weights_average = np.mean(self.grad_weights, 0)  
+		(self.weights, self.previous_direction) = update_function(self.weights, grad_weights_average, self.previous_direction)
+
+class fusion1_layer:
+	#初始化所有变量
+	def __init__(self, num_dimension):
+		self.num_dimension = num_dimension
+		self.inputs1 = np.zeros((batch_size, num_dimension))
+		self.inputs2 = np.zeros((batch_size, num_dimension))
+		self.inputs3 = np.zeros((batch_size, num_dimension))
+		self.outputs = np.zeros((batch_size, num_dimension))
+		self.weights = np.zeros(3)
+		self.previous_direction = np.zeros(3) #用于权值更新时,使用;
+		self.grad_weights = np.zeros((batch_size, 3))
+		self.grad_outputs = np.zeros((batch_size, num_dimension))
+
+	def initialize_weights(self, weight1, weight2, weight3):
+		self.weights = np.array([weight1, weight2, weight3])
+
+	def get_inputs_for_forward(self, input1, input2, input3):
+		self.inputs1 = input1
+		self.inputs2 = input2
+		self.inputs3 = input3
+		
+	#用于计算三种特征加权后的输出值;
+	def forward(self):
+		self.outputs = self.inputs1 * self.weights[0] +\
+		               self.inputs2 * self.weights[1] +\
+					   self.inputs3 * self.weights[2]
+
+	def get_inputs_for_backward(self, grad_outputs):
+		self.grad_outputs = grad_outputs
+
+	#计算对加权系数的导数;
+	def backward(self):
+		self.grad_weights[:, 0] = np.sum(self.grad_outputs * self.inputs1, 1) +\
+		                           np.ones(batch_size) * self.weights[0] * weights_decay  * 20
+		self.grad_weights[:, 1] = np.sum(self.grad_outputs * self.inputs2, 1) + \
+		                           np.ones(batch_size) * self.weights[1] * weights_decay * 20
+		self.grad_weights[:, 2] = np.sum(self.grad_outputs * self.inputs3, 1) + \
+		                           np.ones(batch_size) * self.weights[2] * weights_decay * 20
 
 	#更新加权系数的值;
 	def update(self):
