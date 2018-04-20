@@ -39,7 +39,7 @@ class net:
 		self.da_test3.get_data(sample3, label)
 
 	def initial(self):
-		self.fu.initialize_weights(0.333, 0.333, 0.333)
+		self.fu.initialize_weights(0.1835, 0.3685, 0.6256)
 		self.fc1.initialize_weights()
 		self.fc2.initialize_weights()
 
